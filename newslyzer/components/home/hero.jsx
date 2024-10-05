@@ -11,6 +11,7 @@ import Link from 'next/link';
 import Shoe from './shoe.png';
 import Buil from './buil.png';
 import Man from './man.png';
+import { useUser } from '@auth0/nextjs-auth0/client';
 
 const spaceGrotesk = Space_Grotesk({
   weight: ['400', '700'],
@@ -31,19 +32,23 @@ const data = [
   },
   {
     imgUrl: Man,
-    text: 'Bias Free',
-    subText: 'Unmask the news',
+    text: 'Facts Only',
+    subText: 'No More Confusion',
     link: '/',
   },
   {
     imgUrl: Buil,
-    text: 'Bias Free',
-    subText: 'Unmask the news',
+    text: 'News Analysis',
+    subText: 'Stay aware, Stay Informed',
     link: '/',
   },
 ];
 
 const HomeHero = () => {
+  const { user, isLoading } = useUser();
+
+  // console.log('user', user);
+
   return (
     <div>
       <div className="flex justify-center items-center bg-hero-bg h-screen text-black">
@@ -133,7 +138,7 @@ const HomeHero = () => {
       </div>
       <div className="bg-primary-bg space-y-3 px-10 py-10">
         {data.map((item, index) => (
-          <Link href={item.link}>
+          <Link href={item.link} key={index}>
             <div className="bg-secpmdary-bg mx-32 flex items-center rounded-md justify-between p-1 my-5">
               <div className="flex items-center space-x-1 text-white">
                 <Image
@@ -147,7 +152,7 @@ const HomeHero = () => {
                   <p>Unmast the news</p>
                 </div>
               </div>
-              <div>
+              <div className="pr-10">
                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32">
                   <path
                     d="M 22.707 16.707 L 12.707 26.707 C 12.317 27.098 11.683 27.098 11.293 26.707 C 10.902 26.317 10.902 25.683 11.293 25.293 L 20.586 16 L 11.293 6.707 C 10.902 6.317 10.902 5.683 11.293 5.293 C 11.683 4.902 12.317 4.902 12.707 5.292 L 22.707 15.293 C 22.895 15.48 23.001 15.735 23.001 16 C 23.001 16.265 22.895 16.52 22.707 16.707 Z"
