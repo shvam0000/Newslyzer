@@ -1,6 +1,5 @@
 import React from 'react';
 import Image from 'next/image';
-import { Silkscreen } from 'next/font/google';
 import { Space_Grotesk } from 'next/font/google';
 import HeroImg from './home-hero.png';
 import IndepthOne from './indepeth1.png';
@@ -11,14 +10,8 @@ import Link from 'next/link';
 import Shoe from './shoe.png';
 import Buil from './buil.png';
 import Man from './man.png';
-import { useUser } from '@auth0/nextjs-auth0/client';
 
 const spaceGrotesk = Space_Grotesk({
-  weight: ['400', '700'],
-  subsets: ['latin'],
-});
-
-const silkscreen = Silkscreen({
   weight: ['400', '700'],
   subsets: ['latin'],
 });
@@ -45,16 +38,17 @@ const data = [
 ];
 
 const HomeHero = () => {
-  const { user, isLoading } = useUser();
-
-  // console.log('user', user);
-
   return (
     <div>
       <div className="flex justify-center items-center bg-hero-bg h-screen text-black">
         <div
           className={`${spaceGrotesk.className} w-1/2 mx-auto text-center text-7xl font-semibold`}>
           Unbiasing <br /> the News <br /> with Data
+          <Link href="/newslyzer">
+            <button className="bg-primary-bg text-xl block w-fit mx-auto text-white rounded-lg px-2 py-1 mt-1">
+              Get Started
+            </button>
+          </Link>
         </div>
         <figure className="w-1/2 mx-auto">
           <Image src={HeroImg} alt="Hero Image" width={400} height={100} />
@@ -63,7 +57,7 @@ const HomeHero = () => {
       <div className="h-screen bg-newslyzer-blue">
         <div className="flex justify-center items-center  h-screen text-black">
           <div className={`w-1/2 mx-auto text-center`}>
-            <div className={`uppercase ${silkscreen.className} text-7xl `}>
+            <div className={`uppercase ${spaceGrotesk.className} text-7xl `}>
               Analyse!
             </div>
             <div className={`${spaceGrotesk.className} text-xl px-32 py-5`}>
@@ -85,7 +79,7 @@ const HomeHero = () => {
       </div>
       <div className="bg-primary-bg text-white h-64 py-20 pb-20">
         <h1
-          className={` ${silkscreen.className} text-3xl flex justify-center my-2`}>
+          className={` ${spaceGrotesk.className} text-3xl flex justify-center my-2`}>
           Stay Alert
         </h1>
         <p

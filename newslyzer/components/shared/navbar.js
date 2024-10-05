@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Shapes from './Shapes.png';
 import { Space_Grotesk } from 'next/font/google';
 import Link from 'next/link';
+import { LogoutIcon, ProfileIcon } from '@/utils/icons';
 
 const spaceGrotesk = Space_Grotesk({
   weight: ['400', '700'],
@@ -12,17 +13,13 @@ const spaceGrotesk = Space_Grotesk({
 export default function NavBar() {
   const { user, isLoading } = useUser();
 
-  if (isLoading) {
-    return <div>Loading...</div>; // Add a loading spinner or text while authentication is being processed
-  }
-
   return (
     <nav>
       <div
-        className={`bg-hero-bg flex justify-between items-center px-44 pt-10 ${spaceGrotesk.className} text-xl font-semibold`}>
+        className={`bg-hero-bg flex justify-between items-center px-44 py-5 ${spaceGrotesk.className} text-xl font-semibold`}>
         {/* Home Link */}
         <Link href="/">
-          <div>Home</div>
+          <div>NewsLyzer</div>
         </Link>
 
         {/* Image (Shapes) */}
@@ -35,9 +32,24 @@ export default function NavBar() {
             <div>Login</div>
           </Link>
         ) : (
-          <Link href="/profile">
-            <div>Profile</div>
-          </Link>
+          <div
+            className="flex items-center space-x-3
+          ">
+            <Link href="/profile" className="flex items-center space-x-1">
+              <img
+                src={user.picture}
+                alt="Profile Picture"
+                className="w-8 h-8 rounded-full"
+              />
+              <div>Profile</div>
+            </Link>
+            <Link
+              href="/api/auth/logout"
+              className="flex items-center space-x-1">
+              <LogoutIcon />
+              <span>Log out</span>
+            </Link>
+          </div>
         )}
       </div>
     </nav>
