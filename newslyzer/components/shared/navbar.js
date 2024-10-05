@@ -1,18 +1,23 @@
-import { useUser } from '@auth0/nextjs-auth0';
+import Image from 'next/image';
+import Shapes from './Shapes.png';
+import { Space_Grotesk } from 'next/font/google';
+
+const spaceGrotesk = Space_Grotesk({
+  weight: ['400', '700'],
+  subsets: ['latin'],
+});
 
 export default function NavBar() {
-  const { user } = useUser();
-
   return (
     <nav>
-      {!user ? (
-        <a href="/api/auth/login">Login</a>
-      ) : (
-        <>
-          <a href="/profile">Profile</a>
-          <a href="/api/auth/logout">Logout</a>
-        </>
-      )}
+      <div
+        className={`bg-hero-bg flex justify-between items-center px-44 pt-10 ${spaceGrotesk.className} text-xl font-semibold`}>
+        <div>Home</div>
+        <figure>
+          <Image src={Shapes} alt="Shapes" height={100} width={20} />
+        </figure>
+        <div>Login</div>
+      </div>
     </nav>
   );
 }
