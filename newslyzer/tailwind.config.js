@@ -13,6 +13,7 @@ module.exports = {
       colors: {
         'hero-bg': '#00B4D8',
         'primary-bg': '#023E8A',
+        'secpmdary-bg': '#0248A3',
         'newslyzer-blue': '#CAF0F8',
         'black': '#000000',
         'white': '#FFFFFF',
