@@ -1,16 +1,12 @@
-import localFont from 'next/font/local';
+import React from 'react';
+import HomeHero from '../components/home/hero';
 
-const geistSans = localFont({
-  src: './fonts/GeistVF.woff',
-  variable: '--font-geist-sans',
-  weight: '100 900',
-});
-const geistMono = localFont({
-  src: './fonts/GeistMonoVF.woff',
-  variable: '--font-geist-mono',
-  weight: '100 900',
-});
+const Home = () => {
+  return (
+    <div>
+      <HomeHero />
+    </div>
+  );
+};
 
-export default function Home() {
-  return <div>hello</div>;
-}
+export default Home;

@@ -7,7 +7,16 @@ module.exports = {
   ],
   theme: {
     extend: {
-      colors: {},
+      backgroundImage: {
+        'hero-image': "url('/img/Quote.png')",
+      },
+      colors: {
+        'hero-bg': '#00B4D8',
+        'primary-bg': '#023E8A',
+        'newslyzer-blue': '#CAF0F8',
+        'black': '#000000',
+        'white': '#FFFFFF',
+      },
     },
   },
   plugins: [],
