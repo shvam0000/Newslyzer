@@ -1,10 +1,11 @@
 import { useUser } from '@auth0/nextjs-auth0/client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Space_Grotesk } from 'next/font/google';
 import Button from '../shared/button'; // Assuming you have a shared button component
 import axios from 'axios';
 import { StarIcon } from '@/utils/icons';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
 const spaceGrotesk = Space_Grotesk({
   weight: ['400', '700'],
@@ -151,9 +152,48 @@ const NewsLyzerHero = () => {
       });
   };
 
+  const useOnScreen = (ref) => {
+    const [isIntersecting, setIntersecting] = useState(false);
+
+    useEffect(() => {
+      const observer = new IntersectionObserver(
+        ([entry]) => setIntersecting(entry.isIntersecting),
+        { threshold: 0.1 }
+      );
+
+      if (ref.current) {
+        observer.observe(ref.current);
+      }
+
+      return () => {
+        if (ref.current) {
+          observer.unobserve(ref.current); // Make sure ref.current is not null
+        }
+      };
+    }, [ref]);
+
+    return isIntersecting;
+  };
+
+  const FadeInSection = ({ children }) => {
+    const ref = useRef();
+    const isVisible = useOnScreen(ref);
+
+    return (
+      <motion.div
+        ref={ref}
+        initial={{ opacity: 0, translateY: 50 }}
+        animate={{ opacity: isVisible ? 1 : 0, translateY: isVisible ? 0 : 50 }}
+        transition={{ duration: 0.8 }}>
+        {children}
+      </motion.div>
+    );
+  };
+
   return (
     <div className={` ${spaceGrotesk.className} min-h-screen px-44`}>
       {/* Search Section */}
+
       <div className="flex flex-col flex-wrap items-center mt-20">
         <h1 className={`text-5xl mb-8 font-bold ${spaceGrotesk.className}`}>
           Find the News You Need
@@ -186,81 +226,95 @@ const NewsLyzerHero = () => {
       )}
 
       {summary && sentiment && factOpinionLabel ? (
-        <div className="mt-8 flex justify-end">
-          <button
-            className="text-primary-bg text-xl block w-fit px-2 py-1 rounded-lg"
-            onClick={handleSaveArticle}>
-            <div className="flex justify-center items-center space-x-2">
-              <div className="text-primary-bg">
-                <svg
-                  stroke="currentColor"
-                  fill="currentColor"
-                  stroke-width="0"
-                  viewBox="0 0 384 512"
-                  height="1em"
-                  width="1em"
-                  xmlns="http://www.w3.org/2000/svg">
-                  <path d="M0 512V48C0 21.49 21.49 0 48 0h288c26.51 0 48 21.49 48 48v464L192 400 0 512z"></path>
-                </svg>
+        <FadeInSection>
+          <div className="mt-8 flex justify-end">
+            <button
+              className="text-primary-bg text-xl block w-fit px-2 py-1 rounded-lg"
+              onClick={handleSaveArticle}>
+              <div className="flex justify-center items-center space-x-2">
+                <div className="text-primary-bg">
+                  <svg
+                    stroke="currentColor"
+                    fill="currentColor"
+                    stroke-width="0"
+                    viewBox="0 0 384 512"
+                    height="1em"
+                    width="1em"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path d="M0 512V48C0 21.49 21.49 0 48 0h288c26.51 0 48 21.49 48 48v464L192 400 0 512z"></path>
+                  </svg>
+                </div>
+                <span>Save</span>
               </div>
-              <span>Save</span>
-            </div>
-          </button>
-        </div>
+            </button>
+          </div>
+        </FadeInSection>
       ) : (
         <div></div>
       )}
 
       {imgUrl && (
-        <div className="mt-8">
-          <div>
-            <img src={imgUrl} alt="Image URL" className="w-full my-4" />
+        <FadeInSection>
+          <div className="mt-8">
+            <div>
+              <img src={imgUrl} alt="Image URL" className="w-full my-4" />
+            </div>
+            <div>
+              <span className="font-bold">Deepfake Detection Confidence:</span>{' '}
+              {deepfakeDetection.confidence}%
+            </div>
+            <div>
+              <span className="font-bold">Deepfake Detection Label:</span>{' '}
+              {deepfakeDetection.label}
+            </div>
+            <div>
+              <span className="font-bold">
+                Manipulated Detection Confidence:
+              </span>{' '}
+              {manipulatedDetection.confidence}%
+            </div>
+            <div>
+              <span className="font-bold">Manipulated Detection Label:</span>{' '}
+              {manipulatedDetection.label}
+            </div>
           </div>
-          <div>
-            <span className="font-bold">Deepfake Detection Confidence:</span>{' '}
-            {deepfakeDetection.confidence}%
-          </div>
-          <div>
-            <span className="font-bold">Deepfake Detection Label:</span>{' '}
-            {deepfakeDetection.label}
-          </div>
-          <div>
-            <span className="font-bold">Manipulated Detection Confidence:</span>{' '}
-            {manipulatedDetection.confidence}%
-          </div>
-          <div>
-            <span className="font-bold">Manipulated Detection Label:</span>{' '}
-            {manipulatedDetection.label}
-          </div>
-        </div>
+        </FadeInSection>
       )}
 
       {/* Summary Section */}
       {summary ? (
-        <div className="mt-8">
-          <h2 className="text-3xl font-bold">{title}</h2>
-          <p className="mt-4">{summary}</p>
-        </div>
+        <FadeInSection>
+          <div className="my-4">
+            <h2 className="text-3xl font-bold">{title}</h2>
+            <p className="mt-4">{summary}</p>
+          </div>
+        </FadeInSection>
       ) : url && !summary && hitsearch ? (
-        <div className="text-center">Loading Summary...</div>
+        <FadeInSection>
+          <div className="text-center">Loading Summary...</div>
+        </FadeInSection>
       ) : (
         <div></div>
       )}
 
       {/* Sentiment Section */}
       {sentiment ? (
-        <div>
-          <h2 className="text-3xl font-bold mt-4">Sentiment Analysis</h2>
-          <div className="flex">
-            {Array.from({ length: sentiment }, (_, index) => (
-              <span key={index} className="text-yellow-400 text-2xl">
-                <StarIcon />
-              </span>
-            ))}
+        <FadeInSection>
+          <div>
+            <h2 className="text-3xl font-bold my-4">Sentiment Analysis</h2>
+            <div className="flex">
+              {Array.from({ length: sentiment }, (_, index) => (
+                <span key={index} className="text-yellow-400 text-2xl">
+                  <StarIcon />
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
+        </FadeInSection>
       ) : url && !sentiment && hitsearch ? (
-        <div className="text-center">Loading Sentiment...</div>
+        <FadeInSection>
+          <div className="text-center">Loading Sentiment...</div>
+        </FadeInSection>
       ) : (
         <div></div>
       )}
@@ -270,49 +324,55 @@ const NewsLyzerHero = () => {
       distilbertBiasLabel ||
       factOpinionConfidence ||
       factOpinionLabel ? (
-        <div className="my-8">
-          <h2 className="text-3xl font-bold mb-2">Bias Analysis</h2>
-          <div>
-            <span className="font-bold">DistilBert Bias Confidence:</span>{' '}
-            {distilbertBiasConfidence * 100}%
+        <FadeInSection>
+          <div className="my-8">
+            <h2 className="text-3xl font-bold mb-2">Bias Analysis</h2>
+            <div>
+              <span className="font-bold">DistilBert Bias Confidence:</span>{' '}
+              {distilbertBiasConfidence * 100}%
+            </div>
+            <div>
+              <span className="font-bold">DistilBert Bias Label:</span>{' '}
+              {distilbertBiasLabel}
+            </div>
+            <div>
+              <span className="font-bold">Fact Opinion Confidence:</span>{' '}
+              {Math.floor(factOpinionConfidence * 100)}%
+            </div>
+            <div>
+              <span className="font-bold">Fact Opinion Label:</span>{' '}
+              {factOpinionLabel}
+            </div>
+            <div>
+              <span className="font-bold">GPT Bias Analysis:</span>{' '}
+              {gptBiasAnalysis}
+            </div>
           </div>
-          <div>
-            <span className="font-bold">DistilBert Bias Label:</span>{' '}
-            {distilbertBiasLabel}
-          </div>
-          <div>
-            <span className="font-bold">Fact Opinion Confidence:</span>{' '}
-            {Math.floor(factOpinionConfidence * 100)}%
-          </div>
-          <div>
-            <span className="font-bold">Fact Opinion Label:</span>{' '}
-            {factOpinionLabel}
-          </div>
-          <div>
-            <span className="font-bold">GPT Bias Analysis:</span>{' '}
-            {gptBiasAnalysis}
-          </div>
-        </div>
+        </FadeInSection>
       ) : url && !distilbertBiasConfidence && hitsearch ? (
-        <div className="text-center">Loading Bias...</div>
+        <FadeInSection>
+          <div className="text-center">Loading Bias...</div>
+        </FadeInSection>
       ) : (
         <div></div>
       )}
 
       {news && (
-        <div>
-          <h2 className="text-3xl font-bold mt-8">Latest News</h2>
-          <div className="grid grid-cols-2 gap-4 my-2">
-            {news.map((article, index) => (
-              <div key={index} className="w-full p-4 border border-hero-bg">
-                <h3 className="text-xl font-bold">{article.title}</h3>
-                <Link href={article.url} target="_blank" rel="noreferrer">
-                  <Button text="Read More" />
-                </Link>
-              </div>
-            ))}
+        <FadeInSection>
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold mt-8">Latest News</h2>
+            <div className="grid grid-cols-2 gap-4 my-2">
+              {news.map((article, index) => (
+                <div key={index} className="w-full p-4 border border-hero-bg">
+                  <h3 className="text-xl font-bold">{article.title}</h3>
+                  <Link href={article.url} target="_blank" rel="noreferrer">
+                    <Button text="Read More" />
+                  </Link>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        </FadeInSection>
       )}
     </div>
   );
