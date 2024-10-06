@@ -23,6 +23,9 @@ app = FastAPI()
 origins = [
     "http://localhost:3000",
     "http://localhost",
+    "https://api.newslyzer.co",
+    "https://newslyzer.co",
+    "https://www.newslyzer.biz"
 ]
 
 app.add_middleware(
