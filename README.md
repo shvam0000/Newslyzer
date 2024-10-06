@@ -10,10 +10,10 @@ NewsLyzer helps you to filter Bias, Sentiment and Deepfake from a news article. 
 
 ## Team
 
-| Sr No. | Name           | Email               |
-| ------ | -------------- | ------------------- |
-| 1      | Shivam Shekhar | ss6960@columbia.edu |
-| 2      | Arun           |                     |
+| Sr No. | Name           | Email                |
+| ------ | -------------- | -------------------- |
+| 1      | Shivam Shekhar | ss6960@columbia.edu  |
+| 2      | Arun           | arunkb5604@gmail.com |
 
 ## 📺 Preview
 
