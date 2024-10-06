@@ -116,6 +116,13 @@ export default function Profile({ user }) {
               </div>
             </FadeInSection>
           ))}
+          {user.savedArticles.length === 0 && (
+            <FadeInSection>
+              <div className="text-md mt-4 text-primary-bg font-semibold">
+                No saved articles
+              </div>
+            </FadeInSection>
+          )}
         </div>
       </div>
     </div>

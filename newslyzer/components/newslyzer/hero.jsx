@@ -6,6 +6,7 @@ import axios from 'axios';
 import { StarIcon } from '@/utils/icons';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import toast, { Toaster } from 'react-hot-toast';
 
 const spaceGrotesk = Space_Grotesk({
   weight: ['400', '700'],
@@ -99,22 +100,29 @@ const NewsLyzerHero = () => {
                       })
                       .catch((err) => {
                         console.error('Error fetching questions:', err);
+                        toast.error(
+                          'Error fetching the questions. Please try again.'
+                        );
                       });
                   })
                   .catch((err) => {
                     console.error('Error fetching bias:', err);
+                    toast.error('Error fetching the bias. Please try again.');
                   });
               })
               .catch((err) => {
                 console.error('Error fetching sentiment:', err);
+                toast.error('Error fetching the sentiment. Please try again.');
               });
           })
           .catch((err) => {
             console.error('Error fetching summary:', err);
+            toast.error('Error fetching the summary. Please try again.');
           });
       })
       .catch((err) => {
         console.error('Error searching:', err);
+        toast.error('Error searching for the article. Please try again.');
       });
 
     console.log('Search Query:', url);
@@ -145,10 +153,10 @@ const NewsLyzerHero = () => {
       })
       .then((res) => {
         console.log('Save article response:', res.data);
+        toast.success('Article saved successfully!');
       })
       .catch((err) => {
-        console.log(userId);
-        console.log('Error saving article:', err);
+        toast.error('Error saving article. Please try again.');
       });
   };
 
@@ -193,7 +201,9 @@ const NewsLyzerHero = () => {
   return (
     <div className={` ${spaceGrotesk.className} min-h-screen px-44`}>
       {/* Search Section */}
-
+      <div>
+        <Toaster position="bottom-center" reverseOrder={false} />
+      </div>
       <div className="flex flex-col flex-wrap items-center mt-20">
         <h1 className={`text-5xl mb-8 font-bold ${spaceGrotesk.className}`}>
           Find the News You Need
