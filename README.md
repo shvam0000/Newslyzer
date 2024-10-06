@@ -2,7 +2,7 @@
 
 # NewsLyzer
 
-### Live Demo - https://newslyzer.vercel.app/
+### Live Demo - https://newslyzer.biz/
 
 ## 💡 Project Description
 
