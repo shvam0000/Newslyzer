@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useUser } from '@auth0/nextjs-auth0/client';
+import React, { useState, useEffect } from 'react';
 import { Space_Grotesk } from 'next/font/google';
 import Button from '../shared/button'; // Assuming you have a shared button component
 import axios from 'axios';
@@ -23,6 +24,7 @@ const NewsLyzerHero = () => {
   const [gptBiasAnalysis, setGptBiasAnalysis] = useState();
   const [questions, setQuestions] = useState([]);
   const [hitsearch, setHitSearch] = useState(false);
+  const [userId, setUserId] = useState();
 
   function capitalizeFirstWord(str) {
     if (!str) return '';
@@ -70,28 +72,6 @@ const NewsLyzerHero = () => {
                 setFactOpinionConfidence(res.data.fact_opinion_confidence);
                 setFactOpinionLabel(res.data.fact_opinion_label);
                 setGptBiasAnalysis(res.data.gpt_bias_analysis);
-
-                axios
-                  .post('http://localhost:8000/common-questions', {
-                    url: url,
-                  })
-                  .then((res) => {
-                    console.log(
-                      'Questions response:',
-                      res.data.questions_and_answers
-                    );
-                    if (Array.isArray(res.data.questions_and_answers)) {
-                      setQuestions(res.data.questions_and_answers);
-                    } else {
-                      console.error(
-                        'Questions data is not an array:',
-                        res.data
-                      );
-                    }
-                  })
-                  .catch((err) => {
-                    console.error('Error fetching questions:', err);
-                  });
               })
               .catch((err) => {
                 console.error('Error fetching bias:', err);
@@ -106,6 +86,46 @@ const NewsLyzerHero = () => {
       });
 
     console.log('Search Query:', url);
+  };
+
+  const { user } = useUser();
+
+  useEffect(() => {
+    if (user) {
+      setUserId(user.sub);
+    }
+  }, [user]);
+
+  const handleSaveArticle = () => {
+    if (!user || !url || !title || !summary) {
+      console.error('Missing required fields to save the article');
+      return;
+    }
+
+    const data = {
+      article: {
+        title: title,
+        url: url,
+        content: summary, // Using the summary as the article content
+      },
+    };
+
+    axios
+      .post('http://localhost:8000/articles/save', {
+        auth0Id: userId, // Send auth0Id in the body
+        article: {
+          title: title,
+          url: url,
+          content: summary,
+        },
+      })
+      .then((res) => {
+        console.log('Save article response:', res.data);
+      })
+      .catch((err) => {
+        console.log(userId);
+        console.log('Error saving article:', err);
+      });
   };
 
   return (
@@ -140,6 +160,19 @@ const NewsLyzerHero = () => {
             analysis, bias analysis, and common questions for the article.
           </p>
         </div>
+      )}
+
+      {summary && sentiment && factOpinionLabel ? (
+        <div className="mt-8">
+          {/* <Button
+            text="Save Article"
+            className="bg-primary-bg text-white px-4 py-2 rounded-lg"
+            onMouseDown={handleSaveArticle}
+          /> */}
+          <button onClick={handleSaveArticle}>save</button>
+        </div>
+      ) : (
+        <div></div>
       )}
 
       {/* Summary Section */}
@@ -206,10 +239,10 @@ const NewsLyzerHero = () => {
         <div></div>
       )}
 
-      {console.log('Questions:', typeof questions)}
+      {/* {console.log('Questions:', typeof questions)} */}
       {/* FAQ Section */}
 
-      {Array.isArray(questions) && questions.length > 0 ? (
+      {/* {Array.isArray(questions) && questions.length > 0 ? (
         <div className="my-8">
           <h2 className="text-3xl font-bold">FAQ</h2>
           <div className="mt-4">
@@ -227,9 +260,25 @@ const NewsLyzerHero = () => {
         <p className="text-center">Loading Questions...</p>
       ) : (
         <div></div>
-      )}
+      )} */}
     </div>
   );
 };
 
 export default NewsLyzerHero;
+
+// axios
+//   .post('http://localhost:8000/common-questions', {
+//     url: url,
+//   })
+//   .then((res) => {
+//     console.log('Questions response:', res.data.questions_and_answers);
+//     if (Array.isArray(res.data.questions_and_answers)) {
+//       setQuestions(res.data.questions_and_answers);
+//     } else {
+//       console.error('Questions data is not an array:', res.data);
+//     }
+//   })
+//   .catch((err) => {
+//     console.error('Error fetching questions:', err);
+//   });

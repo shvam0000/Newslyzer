@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Body
 from pydantic import BaseModel
 from transformers import BartTokenizer, BartForConditionalGeneration, BertTokenizer, pipeline, T5Tokenizer, T5ForConditionalGeneration
 from newspaper import Article
@@ -14,22 +14,76 @@ import torch
 from transformers import ViTImageProcessor, ViTForImageClassification
 from io import BytesIO
 import matplotlib.pyplot as plt
+from pymongo import MongoClient
+import ssl
 
 # Initialize FastAPI app
 app = FastAPI()
 
 origins = [
-    "http://localhost",
     "http://localhost:3000",
+    "http://localhost",
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,  # List of allowed origins
-    allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods (GET, POST, PUT, DELETE, etc.)
-    allow_headers=["*"],  # Allows all headers
+    allow_credentials=True,  # Allow cookies to be sent across domains
+    allow_methods=["*"],  # Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
+    allow_headers=["*"],  # Allow all headers
 )
+
+load_dotenv()
+
+# ================== User Router ==================
+try:
+    # Load MongoDB URI from environment
+    client = MongoClient(
+        os.getenv('MONGODB_URI'),
+        tls=True,  # Use `tls` instead of `ssl`
+        tlsAllowInvalidCertificates=True  # This disables certificate verification
+    )
+
+    # Access the correct database
+    db = client['test']  # Replace 'test' with your actual database name
+
+    # Access the collection (no need to check if collection is None)
+    user_collection = db["users"]
+
+    # You can print a success message to confirm connection
+    print("Successfully connected to MongoDB and accessed the 'users' collection.")
+
+except Exception as e:
+    # Handle connection errors
+    print(f"Error connecting to MongoDB: {e}")
+    user_collection = None
+
+class User(BaseModel):
+    auth0Id: str
+    name: str
+    email: str
+    picture: str
+    createdAt: str
+    savedArticles: list
+
+
+# Helper function to serialize MongoDB results
+def user_helper(user) -> dict:
+    return {
+        "id": str(user["_id"]),
+        "auth0Id": user["auth0Id"],
+        "name": user["name"],
+        "email": user["email"],
+        "picture": user["picture"],
+        "createdAt": user["createdAt"],
+        "savedArticles": user["savedArticles"],
+    }
+
+# # ================== SavedArticle Router ==================
+class SavedArticle(BaseModel):
+    title: str
+    url: str
+    content: str
 
 # ================== Summarization Model Setup ==================
 summarization_tokenizer = BartTokenizer.from_pretrained("facebook/bart-large-cnn")
@@ -48,7 +102,7 @@ flan_tokenizer = T5Tokenizer.from_pretrained("google/flan-t5-large", legacy=Fals
 flan_model = T5ForConditionalGeneration.from_pretrained("google/flan-t5-large")
 
 # Set OpenAI API key for GPT-4 fallback
-load_dotenv()
+
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
 # ================== Deepfake & Manipulation Detection Model Setup ==================
@@ -478,4 +532,46 @@ async def fetch_news(input: ArticleInput):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
+def print_entire_db(db):
+    for collection_name in db.list_collection_names():
+        collection = db[collection_name]
+        print(f"\n--- Collection: {collection_name} ---")
+        documents = list(collection.find({}))  # Get all documents in the collection
+        for doc in documents:
+            print(doc)  # Print each document
+
+
+@app.post("/articles/save")
+async def save_article(payload: dict = Body(...)):
+    if user_collection is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+
+    print('user_collection:', user_collection)
+    # print_entire_db(db)
+
+    auth0Id = payload.get('auth0Id')
+    article = payload.get('article')
+    print('auth0Id:', auth0Id)
+    print('article:', article)
+
+    if not auth0Id or not article:
+        raise HTTPException(status_code=422, detail="auth0Id and article are required")
+
+    # Check if user exists
+    user = user_collection.find_one({"auth0Id": {"$regex": f"^{auth0Id}$", "$options": "i"}})
+    print('user:', user)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Append article to user's savedArticles list
+    user_collection.update_one(
+        {"auth0Id": auth0Id},
+        {"$push": {"savedArticles": article}}
+    )
+
+    return {"message": "Article saved successfully"}
+
+
+
 # ================== Run the app with: uvicorn main:app --reload ==================
+
