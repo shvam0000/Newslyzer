@@ -4,6 +4,7 @@ import { Space_Grotesk } from 'next/font/google';
 import Button from '../shared/button'; // Assuming you have a shared button component
 import axios from 'axios';
 import { StarIcon } from '@/utils/icons';
+import Link from 'next/link';
 
 const spaceGrotesk = Space_Grotesk({
   weight: ['400', '700'],
@@ -15,73 +16,104 @@ const NewsLyzerHero = () => {
   const [summary, setSummary] = useState('');
   const [title, setTitle] = useState('');
   const [sentiment, setSentiment] = useState();
-  const [bias, setBias] = useState();
   const [distilbertBiasConfidence, setDistilbertBiasConfidence] = useState();
   const [distilbertBiasLabel, setDistilbertBiasLabel] = useState();
   const [factOpinionConfidence, setFactOpinionConfidence] = useState();
   const [factOpinionLabel, setFactOpinionLabel] = useState();
   const [gptBiasAnalysis, setGptBiasAnalysis] = useState();
-  const [questions, setQuestions] = useState([]);
   const [hitsearch, setHitSearch] = useState(false);
   const [userId, setUserId] = useState();
+  const [imgUrl, setImgUrl] = useState();
+  const [deepfakeDetection, setDeepfakeDetection] = useState({
+    label: '',
+    confidence: 0,
+  });
 
-  function capitalizeFirstWord(str) {
-    if (!str) return '';
-    const words = str.split(' ');
-    if (words.length === 0) return str;
+  const [manipulatedDetection, setManipulatedDetection] = useState({
+    label: '',
+    confidence: 0,
+  });
 
-    words[0] = words[0].charAt(0).toUpperCase() + words[0].slice(1);
-
-    return words.join(' ');
-  }
+  const [news, setNews] = useState();
 
   const handleSearch = (e) => {
     e.preventDefault();
     setHitSearch(true);
 
     axios
-      .post('http://localhost:8000/summarize', {
+      .post('http://localhost:8000/detect-image', {
         url: url,
       })
       .then((res) => {
-        console.log('Response:', res.data);
-        setTitle(res.data.title);
-        setSummary(res.data.summary);
-        setHitSearch(false);
+        console.log('Img Response:', res.data);
+        setImgUrl(res.data.image_url);
+        setDeepfakeDetection({
+          label: res.data.deepfake_detection.label,
+          confidence: res.data.deepfake_detection.confidence,
+        });
+        setManipulatedDetection({
+          label: res.data.manipulation_detection.label,
+          confidence: res.data.manipulation_detection.confidence,
+        });
 
         axios
-          .post('http://localhost:8000/sentiment', {
+          .post('http://localhost:8000/summarize', {
             url: url,
           })
           .then((res) => {
-            console.log('Sentiment:', res.data);
-            setSentiment(res.data.average_sentiment_score);
+            console.log('Response:', res.data);
+            setTitle(res.data.title);
+            setSummary(res.data.summary);
+            setHitSearch(false);
 
             axios
-              .post('http://localhost:8000/bias', {
+              .post('http://localhost:8000/sentiment', {
                 url: url,
               })
               .then((res) => {
-                console.log('Bias:', res.data);
-                setBias(res.data);
-                setDistilbertBiasConfidence(
-                  res.data.distilbert_bias_confidence
-                );
-                setDistilbertBiasLabel(res.data.distilbert_bias_label);
-                setFactOpinionConfidence(res.data.fact_opinion_confidence);
-                setFactOpinionLabel(res.data.fact_opinion_label);
-                setGptBiasAnalysis(res.data.gpt_bias_analysis);
+                console.log('Sentiment:', res.data);
+                setSentiment(res.data.average_sentiment_score);
+
+                axios
+                  .post('http://localhost:8000/bias', {
+                    url: url,
+                  })
+                  .then((res) => {
+                    console.log('Bias:', res.data);
+                    setDistilbertBiasConfidence(
+                      res.data.distilbert_bias_confidence
+                    );
+                    setDistilbertBiasLabel(res.data.distilbert_bias_label);
+                    setFactOpinionConfidence(res.data.fact_opinion_confidence);
+                    setFactOpinionLabel(res.data.fact_opinion_label);
+                    setGptBiasAnalysis(res.data.gpt_bias_analysis);
+
+                    axios
+                      .post('http://localhost:8000/fetch-news', {
+                        url: url,
+                      })
+                      .then((res) => {
+                        console.log('News:', res.data);
+                        setNews(res.data.latest_articles);
+                      })
+                      .catch((err) => {
+                        console.error('Error fetching questions:', err);
+                      });
+                  })
+                  .catch((err) => {
+                    console.error('Error fetching bias:', err);
+                  });
               })
               .catch((err) => {
-                console.error('Error fetching bias:', err);
+                console.error('Error fetching sentiment:', err);
               });
           })
           .catch((err) => {
-            console.error('Error fetching sentiment:', err);
+            console.error('Error fetching summary:', err);
           });
       })
       .catch((err) => {
-        console.error('Error fetching summary:', err);
+        console.error('Error searching:', err);
       });
 
     console.log('Search Query:', url);
@@ -101,17 +133,9 @@ const NewsLyzerHero = () => {
       return;
     }
 
-    const data = {
-      article: {
-        title: title,
-        url: url,
-        content: summary, // Using the summary as the article content
-      },
-    };
-
     axios
       .post('http://localhost:8000/articles/save', {
-        auth0Id: userId, // Send auth0Id in the body
+        auth0Id: userId,
         article: {
           title: title,
           url: url,
@@ -162,16 +186,53 @@ const NewsLyzerHero = () => {
       )}
 
       {summary && sentiment && factOpinionLabel ? (
-        <div className="mt-8">
-          {/* <Button
-            text="Save Article"
-            className="bg-primary-bg text-white px-4 py-2 rounded-lg"
-            onMouseDown={handleSaveArticle}
-          /> */}
-          <button onClick={handleSaveArticle}>save</button>
+        <div className="mt-8 flex justify-end">
+          <button
+            className="text-primary-bg text-xl block w-fit px-2 py-1 rounded-lg"
+            onClick={handleSaveArticle}>
+            <div className="flex justify-center items-center space-x-2">
+              <div className="text-primary-bg">
+                <svg
+                  stroke="currentColor"
+                  fill="currentColor"
+                  stroke-width="0"
+                  viewBox="0 0 384 512"
+                  height="1em"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg">
+                  <path d="M0 512V48C0 21.49 21.49 0 48 0h288c26.51 0 48 21.49 48 48v464L192 400 0 512z"></path>
+                </svg>
+              </div>
+              <span>Save</span>
+            </div>
+          </button>
         </div>
       ) : (
         <div></div>
+      )}
+
+      {imgUrl && (
+        <div className="mt-8">
+          <div>
+            <img src={imgUrl} alt="Image URL" className="w-full my-4" />
+          </div>
+          <div>
+            <span className="font-bold">Deepfake Detection Confidence:</span>{' '}
+            {deepfakeDetection.confidence}%
+          </div>
+          <div>
+            <span className="font-bold">Deepfake Detection Label:</span>{' '}
+            {deepfakeDetection.label}
+          </div>
+          <div>
+            <span className="font-bold">Manipulated Detection Confidence:</span>{' '}
+            {manipulatedDetection.confidence}%
+          </div>
+          <div>
+            <span className="font-bold">Manipulated Detection Label:</span>{' '}
+            {manipulatedDetection.label}
+          </div>
+        </div>
       )}
 
       {/* Summary Section */}
@@ -238,46 +299,23 @@ const NewsLyzerHero = () => {
         <div></div>
       )}
 
-      {/* {console.log('Questions:', typeof questions)} */}
-      {/* FAQ Section */}
-
-      {/* {Array.isArray(questions) && questions.length > 0 ? (
-        <div className="my-8">
-          <h2 className="text-3xl font-bold">FAQ</h2>
-          <div className="mt-4">
-            {questions.map((q, index) => (
-              <details key={index} className="mb-4">
-                <summary className="font-bold cursor-pointer">
-                  {capitalizeFirstWord(q.question)}
-                </summary>
-                <p className="mt-2">{capitalizeFirstWord(q.answer)}</p>
-              </details>
+      {news && (
+        <div>
+          <h2 className="text-3xl font-bold mt-8">Latest News</h2>
+          <div className="grid grid-cols-2 gap-4 my-2">
+            {news.map((article, index) => (
+              <div key={index} className="w-full p-4 border border-hero-bg">
+                <h3 className="text-xl font-bold">{article.title}</h3>
+                <Link href={article.url} target="_blank" rel="noreferrer">
+                  <Button text="Read More" />
+                </Link>
+              </div>
             ))}
           </div>
         </div>
-      ) : url && !questions && hitsearch ? (
-        <p className="text-center">Loading Questions...</p>
-      ) : (
-        <div></div>
-      )} */}
+      )}
     </div>
   );
 };
 
 export default NewsLyzerHero;
-
-// axios
-//   .post('http://localhost:8000/common-questions', {
-//     url: url,
-//   })
-//   .then((res) => {
-//     console.log('Questions response:', res.data.questions_and_answers);
-//     if (Array.isArray(res.data.questions_and_answers)) {
-//       setQuestions(res.data.questions_and_answers);
-//     } else {
-//       console.error('Questions data is not an array:', res.data);
-//     }
-//   })
-//   .catch((err) => {
-//     console.error('Error fetching questions:', err);
-//   });
