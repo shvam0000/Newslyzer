@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Space_Grotesk } from 'next/font/google';
 import Button from '../shared/button'; // Assuming you have a shared button component
+import axios from 'axios';
+import { StarIcon } from '@/utils/icons';
 
 const spaceGrotesk = Space_Grotesk({
   weight: ['400', '700'],
@@ -8,16 +10,104 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 const NewsLyzerHero = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [url, setUrl] = useState('');
+  const [summary, setSummary] = useState('');
+  const [title, setTitle] = useState('');
+  const [sentiment, setSentiment] = useState();
+  const [bias, setBias] = useState();
+  const [distilbertBiasConfidence, setDistilbertBiasConfidence] = useState();
+  const [distilbertBiasLabel, setDistilbertBiasLabel] = useState();
+  const [factOpinionConfidence, setFactOpinionConfidence] = useState();
+  const [factOpinionLabel, setFactOpinionLabel] = useState();
+  const [gptBiasAnalysis, setGptBiasAnalysis] = useState();
+  const [questions, setQuestions] = useState([]);
+
+  function capitalizeFirstWord(str) {
+    if (!str) return ''; // Handle empty strings
+    const words = str.split(' '); // Split the string into words
+    if (words.length === 0) return str;
+
+    // Capitalize the first word
+    words[0] = words[0].charAt(0).toUpperCase() + words[0].slice(1);
+
+    // Join the words back together into a string
+    return words.join(' ');
+  }
 
   const handleSearch = (e) => {
     e.preventDefault();
-    // Handle the search logic here
-    console.log('Search Query:', searchQuery);
+
+    axios
+      .post('http://localhost:8000/summarize', {
+        url: url,
+      })
+      .then((res) => {
+        console.log('Response:', res.data);
+        setTitle(res.data.title);
+        setSummary(res.data.summary);
+
+        axios
+          .post('http://localhost:8000/sentiment', {
+            url: url,
+          })
+          .then((res) => {
+            console.log('Sentiment:', res.data);
+            setSentiment(res.data.average_sentiment_score);
+
+            axios
+              .post('http://localhost:8000/bias', {
+                url: url,
+              })
+              .then((res) => {
+                console.log('Bias:', res.data);
+                setBias(res.data);
+                setDistilbertBiasConfidence(
+                  res.data.distilbert_bias_confidence
+                );
+                setDistilbertBiasLabel(res.data.distilbert_bias_label);
+                setFactOpinionConfidence(res.data.fact_opinion_confidence);
+                setFactOpinionLabel(res.data.fact_opinion_label);
+                setGptBiasAnalysis(res.data.gpt_bias_analysis);
+
+                axios
+                  .post('http://localhost:8000/common-questions', {
+                    url: url,
+                  })
+                  .then((res) => {
+                    console.log(
+                      'Questions response:',
+                      res.data.questions_and_answers
+                    );
+                    if (Array.isArray(res.data.questions_and_answers)) {
+                      setQuestions(res.data.questions_and_answers);
+                    } else {
+                      console.error(
+                        'Questions data is not an array:',
+                        res.data
+                      );
+                    }
+                  })
+                  .catch((err) => {
+                    console.error('Error fetching questions:', err);
+                  });
+              })
+              .catch((err) => {
+                console.error('Error fetching bias:', err);
+              });
+          })
+          .catch((err) => {
+            console.error('Error fetching sentiment:', err);
+          });
+      })
+      .catch((err) => {
+        console.error('Error fetching summary:', err);
+      });
+
+    console.log('Search Query:', url);
   };
 
   return (
-    <div className="min-h-screen">
+    <div className={` ${spaceGrotesk.className} min-h-screen px-44`}>
       {/* Search Section */}
       <div className="flex flex-col flex-wrap items-center mt-20">
         <h1 className={`text-5xl mb-8 font-bold ${spaceGrotesk.className}`}>
@@ -31,8 +121,8 @@ const NewsLyzerHero = () => {
             type="text"
             placeholder="Search for articles, news, or topics..."
             className="w-full p-4 rounded-lg text-black focus:outline-none text-lg border border-primary-bg"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
           />
           <Button
             text="Search"
@@ -40,6 +130,85 @@ const NewsLyzerHero = () => {
           />
         </form>
       </div>
+
+      {/* Summary Section */}
+      {summary ? (
+        <div className="mt-8">
+          <h2 className="text-3xl font-bold">{title}</h2>
+          <p className="mt-4">{summary}</p>
+        </div>
+      ) : (
+        <div></div>
+      )}
+
+      {/* Sentiment Section */}
+      {sentiment ? (
+        <div>
+          <h2 className="text-3xl font-bold mt-4">Sentiment Analysis</h2>
+          <div className="flex">
+            {Array.from({ length: sentiment }, (_, index) => (
+              <span key={index} className="text-yellow-400 text-2xl">
+                <StarIcon />
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div></div>
+      )}
+
+      {/* Bias Section */}
+      {distilbertBiasConfidence ||
+      distilbertBiasLabel ||
+      factOpinionConfidence ||
+      factOpinionLabel ? (
+        <div className="my-8">
+          <h2 className="text-3xl font-bold mb-2">Bias Analysis</h2>
+          <div>
+            <span className="font-bold">DistilBert Bias Confidence:</span>{' '}
+            {distilbertBiasConfidence * 100}%
+          </div>
+          <div>
+            <span className="font-bold">DistilBert Bias Label:</span>{' '}
+            {distilbertBiasLabel}
+          </div>
+          <div>
+            <span className="font-bold">Fact Opinion Confidence:</span>{' '}
+            {Math.floor(factOpinionConfidence * 100)}%
+          </div>
+          <div>
+            <span className="font-bold">Fact Opinion Label:</span>{' '}
+            {factOpinionLabel}
+          </div>
+          <div>
+            <span className="font-bold">GPT Bias Analysis:</span>{' '}
+            {gptBiasAnalysis}
+          </div>
+        </div>
+      ) : (
+        <div></div>
+      )}
+
+      {console.log('Questions:', typeof questions)}
+      {/* FAQ Section */}
+
+      {Array.isArray(questions) && questions.length > 0 ? (
+        <div className="my-8">
+          <h2 className="text-3xl font-bold">FAQ</h2>
+          <div className="mt-4">
+            {questions.map((q, index) => (
+              <details key={index} className="mb-4">
+                <summary className="font-bold cursor-pointer">
+                  {capitalizeFirstWord(q.question)}
+                </summary>
+                <p className="mt-2">{capitalizeFirstWord(q.answer)}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <p></p>
+      )}
     </div>
   );
 };
