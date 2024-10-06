@@ -3,6 +3,7 @@ import { Space_Grotesk } from 'next/font/google';
 import Button from '../shared/button'; // Assuming you have a shared button component
 import axios from 'axios';
 import { StarIcon } from '@/utils/icons';
+import { set } from 'mongoose';
 
 const spaceGrotesk = Space_Grotesk({
   weight: ['400', '700'],
@@ -21,21 +22,21 @@ const NewsLyzerHero = () => {
   const [factOpinionLabel, setFactOpinionLabel] = useState();
   const [gptBiasAnalysis, setGptBiasAnalysis] = useState();
   const [questions, setQuestions] = useState([]);
+  const [hitsearch, setHitSearch] = useState(false);
 
   function capitalizeFirstWord(str) {
-    if (!str) return ''; // Handle empty strings
-    const words = str.split(' '); // Split the string into words
+    if (!str) return '';
+    const words = str.split(' ');
     if (words.length === 0) return str;
 
-    // Capitalize the first word
     words[0] = words[0].charAt(0).toUpperCase() + words[0].slice(1);
 
-    // Join the words back together into a string
     return words.join(' ');
   }
 
   const handleSearch = (e) => {
     e.preventDefault();
+    setHitSearch(true);
 
     axios
       .post('http://localhost:8000/summarize', {
@@ -45,6 +46,7 @@ const NewsLyzerHero = () => {
         console.log('Response:', res.data);
         setTitle(res.data.title);
         setSummary(res.data.summary);
+        setHitSearch(false);
 
         axios
           .post('http://localhost:8000/sentiment', {
@@ -131,12 +133,23 @@ const NewsLyzerHero = () => {
         </form>
       </div>
 
+      {!url && (
+        <div className="mt-8 text-center">
+          <p className="mt-4">
+            Enter a URL in the search bar above to get a summary, sentiment
+            analysis, bias analysis, and common questions for the article.
+          </p>
+        </div>
+      )}
+
       {/* Summary Section */}
       {summary ? (
         <div className="mt-8">
           <h2 className="text-3xl font-bold">{title}</h2>
           <p className="mt-4">{summary}</p>
         </div>
+      ) : url && !summary && hitsearch ? (
+        <div className="text-center">Loading Summary...</div>
       ) : (
         <div></div>
       )}
@@ -153,6 +166,8 @@ const NewsLyzerHero = () => {
             ))}
           </div>
         </div>
+      ) : url && !sentiment && hitsearch ? (
+        <div className="text-center">Loading Sentiment...</div>
       ) : (
         <div></div>
       )}
@@ -185,6 +200,8 @@ const NewsLyzerHero = () => {
             {gptBiasAnalysis}
           </div>
         </div>
+      ) : url && !distilbertBiasConfidence && hitsearch ? (
+        <div className="text-center">Loading Bias...</div>
       ) : (
         <div></div>
       )}
@@ -206,8 +223,10 @@ const NewsLyzerHero = () => {
             ))}
           </div>
         </div>
+      ) : url && !questions && hitsearch ? (
+        <p className="text-center">Loading Questions...</p>
       ) : (
-        <p></p>
+        <div></div>
       )}
     </div>
   );
