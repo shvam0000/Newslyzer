@@ -31,6 +31,8 @@ NewsLyzer helps you to filter Bias, Sentiment and Deepfake from a news article. 
 
 ## 🏛️ Architecture Diagram
 
+<img src="./newslyzer/public/readme-assets/arch.jpeg" alt="newsLyzer" height="500" width="1000">
+
 ## 📌 Prerequisites
 
 ### 💻 System requirement :
