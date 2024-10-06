@@ -43,7 +43,7 @@ const NewsLyzerHero = () => {
     setHitSearch(true);
 
     axios
-      .post('http://localhost:8000/detect-image', {
+      .post('https://api.newslyzer.co/detect-image', {
         url: url,
       })
       .then((res) => {
@@ -59,7 +59,7 @@ const NewsLyzerHero = () => {
         });
 
         axios
-          .post('http://localhost:8000/summarize', {
+          .post('https://api.newslyzer.co/summarize', {
             url: url,
           })
           .then((res) => {
@@ -69,7 +69,7 @@ const NewsLyzerHero = () => {
             setHitSearch(false);
 
             axios
-              .post('http://localhost:8000/sentiment', {
+              .post('https://api.newslyzer.co/sentiment', {
                 url: url,
               })
               .then((res) => {
@@ -77,7 +77,7 @@ const NewsLyzerHero = () => {
                 setSentiment(res.data.average_sentiment_score);
 
                 axios
-                  .post('http://localhost:8000/bias', {
+                  .post('https://api.newslyzer.co/bias', {
                     url: url,
                   })
                   .then((res) => {
@@ -91,7 +91,7 @@ const NewsLyzerHero = () => {
                     setGptBiasAnalysis(res.data.gpt_bias_analysis);
 
                     axios
-                      .post('http://localhost:8000/fetch-news', {
+                      .post('https://api.newslyzer.co/fetch-news', {
                         url: url,
                       })
                       .then((res) => {
@@ -143,7 +143,7 @@ const NewsLyzerHero = () => {
     }
 
     axios
-      .post('http://localhost:8000/articles/save', {
+      .post('https://api.newslyzer.co/articles/save', {
         auth0Id: userId,
         article: {
           title: title,
