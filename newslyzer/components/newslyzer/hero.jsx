@@ -4,7 +4,6 @@ import { Space_Grotesk } from 'next/font/google';
 import Button from '../shared/button'; // Assuming you have a shared button component
 import axios from 'axios';
 import { StarIcon } from '@/utils/icons';
-import { set } from 'mongoose';
 
 const spaceGrotesk = Space_Grotesk({
   weight: ['400', '700'],

@@ -14,7 +14,6 @@ export const getServerSideProps = withPageAuthRequired({
   async getServerSideProps(context) {
     const { user } = await getSession(context.req, context.res);
 
-    // Connect to MongoDB
     await dbConnect();
 
     // Check if user exists in the database
@@ -27,6 +26,7 @@ export const getServerSideProps = withPageAuthRequired({
         name: user.name,
         email: user.email,
         picture: user.picture,
+        article: user.savedArticles,
       });
       await existingUser.save();
 
@@ -47,27 +47,6 @@ export const getServerSideProps = withPageAuthRequired({
   },
 });
 
-const savedArticles = [
-  {
-    id: '1',
-    title: 'This is first post',
-    content:
-      'lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam,',
-  },
-  {
-    id: '2',
-    title: 'This is first post',
-    content:
-      'lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam,',
-  },
-  {
-    id: '3',
-    title: 'This is first post',
-    content:
-      'lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam,',
-  },
-];
-
 export default function Profile({ user }) {
   return (
     <div
@@ -76,7 +55,7 @@ export default function Profile({ user }) {
       <div>
         <div className="text-xl font-semibold">Your Saved Articles</div>
         <div className="grid grid-cols-3">
-          {savedArticles.map((article) => (
+          {user.savedArticles.map((article) => (
             <div className="border border-white mx-1 p-2 my-5" key={article.id}>
               <h1 className="text-primary-bg font-bold text-xl">
                 {article.title}
@@ -84,7 +63,7 @@ export default function Profile({ user }) {
               <p className="text-justify">
                 {article.content.substring(0, 300)}...
               </p>
-              <Link href={`/profile/articles/${article.id}`}>
+              <Link href={article.url}>
                 <Button className="bg-primary-bg mt-2" text="Read More" />
               </Link>
             </div>
