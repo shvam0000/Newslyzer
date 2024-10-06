@@ -7,6 +7,13 @@ import openai
 import os
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+import requests
+from PIL import Image
+import numpy as np
+import torch
+from transformers import ViTImageProcessor, ViTForImageClassification
+from io import BytesIO
+import matplotlib.pyplot as plt
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -43,6 +50,27 @@ flan_model = T5ForConditionalGeneration.from_pretrained("google/flan-t5-large")
 # Set OpenAI API key for GPT-4 fallback
 load_dotenv()
 openai.api_key = os.getenv('OPENAI_API_KEY')
+
+# ================== Deepfake & Manipulation Detection Model Setup ==================
+deepfake_labels = ['Real', 'Fake']
+label2id = {label: i for i, label in enumerate(deepfake_labels)}
+id2label = {i: label for i, label in enumerate(deepfake_labels)}
+
+# Deepfake detection model
+deepfake_model_str = "dima806/deepfake_vs_real_image_detection"
+deepfake_processor = ViTImageProcessor.from_pretrained(deepfake_model_str)
+deepfake_model = ViTForImageClassification.from_pretrained(deepfake_model_str, num_labels=len(deepfake_labels))
+deepfake_model.config.id2label = id2label
+deepfake_model.config.label2id = label2id
+
+# General manipulation detection model
+manipulation_model_str = "google/vit-base-patch16-224"
+manipulation_processor = ViTImageProcessor.from_pretrained(manipulation_model_str)
+manipulation_model = ViTForImageClassification.from_pretrained(
+    manipulation_model_str,
+    num_labels=2,  # 2 classes: manipulated, not manipulated
+    ignore_mismatched_sizes=True
+)
 
 # ================== Helper Functions ==================
 
@@ -169,6 +197,97 @@ def answer_with_gpt4(article_text, question):
         ]
     )
     return response['choices'][0]['message']['content']
+
+
+# ================== Image Extraction and Processing Functions ==================
+
+def get_image_url_from_article(article_url):
+    try:
+        article = Article(article_url)
+        article.download()
+        article.parse()
+        images = article.images
+        if images:
+            return list(images)[0]
+        else:
+            return None
+    except Exception as e:
+        raise ValueError(f"Could not extract article from URL. Error: {e}")
+
+def preprocess_image(image_url, processor):
+    try:
+        response = requests.get(image_url)
+        img = Image.open(BytesIO(response.content)).convert("RGB")
+        img = img.resize((224, 224))
+        img_array = np.array(img) / 255.0
+        img_array = np.expand_dims(img_array, axis=0)
+        return processor(images=img_array, return_tensors="pt")
+    except Exception as e:
+        raise ValueError(f"Error processing image: {e}")
+
+def detect_deepfake(image_tensor):
+    with torch.no_grad():
+        outputs = deepfake_model(**image_tensor)
+        predictions = torch.nn.functional.softmax(outputs.logits, dim=-1)
+        confidence, label_idx = torch.max(predictions, dim=1)
+        label = id2label[label_idx.item()]
+        confidence = confidence.item() * 100
+        return label, confidence
+
+def detect_manipulation(image_tensor):
+    with torch.no_grad():
+        outputs = manipulation_model(**image_tensor)
+        predictions = torch.nn.functional.softmax(outputs.logits, dim=-1)
+        confidence, label_idx = torch.max(predictions, dim=1)
+        label = "Manipulated" if label_idx.item() == 1 else "Not Manipulated"
+        confidence = confidence.item() * 100
+        return label, confidence
+
+
+# ================== NewsAPI Integration ==================
+api_key = os.getenv('NEWS_API_KEY')  # Set your NewsAPI key
+
+def extract_main_topic(article_url):
+    try:
+        article = Article(article_url)
+        article.download()
+        article.parse()
+        return article.title  # Main topic is derived from the title
+    except Exception as e:
+        raise ValueError(f"Could not extract article from URL. Error: {e}")
+
+def get_topic_articles(query):
+    url = "https://newsapi.org/v2/everything"
+    params = {
+        "q": query,
+        "apiKey": api_key,
+        "language": "en",
+        "pageSize": 2  # Fetch 2 relevant articles
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        articles = response.json().get('articles', [])
+        return [{"title": article['title'], "url": article['url']} for article in articles]
+    else:
+        print("Failed to fetch articles staying on topic.")
+        return []
+
+def get_latest_articles_by_country(country='us'):
+    url = "https://newsapi.org/v2/top-headlines"
+    params = {
+        "country": country,
+        "apiKey": api_key,
+        "language": "en",
+        "pageSize": 2  # Fetch 2 latest articles
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        articles = response.json().get('articles', [])
+        return [{"title": article['title'], "url": article['url']} for article in articles]
+    else:
+        print("Failed to fetch latest articles.")
+        return []
+
 
 # ================== Request Models ==================
 
@@ -302,6 +421,59 @@ async def proceed_with_gpt(input: ArticleInput, question: str):
         # Generate answer using GPT-4
         answer = answer_with_gpt4(cleaned_text, question)
         return {"question": question, "answer": answer}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+@app.post("/detect-image")
+async def detect_image_manipulation(input: ArticleInput):
+    url = input.url
+    try:
+        image_url = get_image_url_from_article(url)
+        if not image_url:
+            raise HTTPException(status_code=404, detail="No image found in the article.")
+        
+        image_tensor = preprocess_image(image_url, deepfake_processor)
+
+        # Deepfake detection
+        deepfake_label, deepfake_confidence = detect_deepfake(image_tensor)
+
+        # Manipulation detection
+        manipulation_label, manipulation_confidence = detect_manipulation(image_tensor)
+
+        return {
+            "image_url": image_url,
+            "deepfake_detection": {
+                "label": deepfake_label,
+                "confidence": round(deepfake_confidence, 2)
+            },
+            "manipulation_detection": {
+                "label": manipulation_label,
+                "confidence": round(manipulation_confidence, 2)
+            }
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+@app.post("/fetch-news")
+async def fetch_news(input: ArticleInput):
+    url = input.url
+    try:
+        # Extract main topic from the article
+        main_topic = extract_main_topic(url)
+        
+        # Fetch articles staying on the topic
+        topic_articles = get_topic_articles(main_topic)
+        
+        # Fetch the latest news articles by country
+        latest_articles = get_latest_articles_by_country()
+        
+        return {
+            "main_topic": main_topic,
+            "topic_articles": topic_articles,
+            "latest_articles": latest_articles
+        }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
