@@ -18,9 +18,14 @@ export default function NavBar() {
       <div
         className={`bg-hero-bg flex justify-between items-center px-44 py-5 ${spaceGrotesk.className} text-xl font-semibold`}>
         {/* Home Link */}
-        <Link href="/">
-          <div>NewsLyzer</div>
-        </Link>
+        <div className="flex items-center space-x-3">
+          <Link href="/">
+            <div>Home</div>
+          </Link>
+          <Link href="/newslyzer">
+            <div classNames="hover:underline">NewsLyzer</div>
+          </Link>
+        </div>
 
         {/* Image (Shapes) */}
         <figure>

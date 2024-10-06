@@ -21,55 +21,58 @@ const data = [
     imgUrl: Shoe,
     text: 'Bias Free',
     subText: 'Unmask the news',
-    link: '/',
+    link: '/newslyzer',
   },
   {
     imgUrl: Man,
     text: 'Facts Only',
     subText: 'No More Confusion',
-    link: '/',
+    link: '/newslyzer',
   },
   {
     imgUrl: Buil,
     text: 'News Analysis',
     subText: 'Stay aware, Stay Informed',
-    link: '/',
+    link: '/newslyzer',
   },
 ];
 
 const HomeHero = () => {
   return (
     <div>
-      <div className="flex justify-center items-center bg-hero-bg h-screen text-black">
+      <div className="flex justify-between items-center bg-hero-bg py-40 text-black">
         <div
-          className={`${spaceGrotesk.className} w-1/2 mx-auto text-center text-7xl font-semibold`}>
-          Unbiasing <br /> the News <br /> with Data
+          className={`${spaceGrotesk.className} pl-32 w-1/2 mx-auto text-left text-6xl font-semibold`}>
+          Unbiasing <br /> the News with Data
           <Link href="/newslyzer">
-            <button className="bg-primary-bg text-xl block w-fit mx-auto text-white rounded-lg px-2 py-1 mt-1">
+            <button className="bg-primary-bg text-xl block w-fit text-white rounded-lg px-2 py-1 mt-4">
               Get Started
             </button>
           </Link>
         </div>
-        <figure className="w-1/2 mx-auto">
+        <figure className="w-1/2 mx-auto flex justify-center">
           <Image src={HeroImg} alt="Hero Image" width={400} height={100} />
         </figure>
       </div>
+
       <div className="h-screen bg-newslyzer-blue">
-        <div className="flex justify-center items-center  h-screen text-black">
-          <div className={`w-1/2 mx-auto text-center`}>
-            <div className={`uppercase ${spaceGrotesk.className} text-7xl `}>
+        <div className="flex justify-between items-center h-screen text-black pl-32">
+          <div className={`w-1/2 mx-auto text-left`}>
+            <div className={`uppercase ${spaceGrotesk.className} text-7xl`}>
               Analyse!
             </div>
-            <div className={`${spaceGrotesk.className} text-xl px-32 py-5`}>
+            <div className={`${spaceGrotesk.className} text-xl pr-20 py-5`}>
               Ever wondered if there&apos;s a way to filter out the noise, bias
               and nonsense from the news? That&apos;s where we come in. Unmask
               the truth with us.
             </div>
-            <button className="bg-hero-bg text-white px-2 py-1 rounded-md w-1/2">
-              ANALYSE NOW
-            </button>
+            <Link href="/newslyzer">
+              <button className="bg-hero-bg text-white px-2 py-1 rounded-md w-fit">
+                ANALYSE NOW
+              </button>
+            </Link>
           </div>
-          <figure className="w-1/2 mx-auto text-center">
+          <figure className="w-1/2 mx-auto flex justify-center pr-16">
             <Image src={Building} alt="Hero Image" width={400} height={100} />
           </figure>
         </div>
@@ -77,7 +80,7 @@ const HomeHero = () => {
       <div className="h-screen bg-cover bg-center bg-no-repeat bg-hero-image text-white flex justify-center items-center text-7xl">
         Let's Start with the Facts.
       </div>
-      <div className="bg-primary-bg text-white h-64 py-20 pb-20">
+      <div className="bg-primary-bg text-white py-10">
         <h1
           className={` ${spaceGrotesk.className} text-3xl flex justify-center my-2`}>
           Stay Alert
@@ -90,42 +93,43 @@ const HomeHero = () => {
         <form className="flex justify-center space-x-2 my-2">
           <input
             type="email"
-            className="bg-white text-black focus:outline-none p-1 placeholder-gray-300 rounded-md "
+            className="bg-white text-black focus:outline-none p-1 placeholder-gray-300 rounded-md px-4"
             placeholder="Email Address"
           />
           <Button text="Sign Up" />
         </form>
       </div>
-      <div className="h-screen bg-primary-bg">
-        <div className="flex justify-center items-center  h-screen text-black">
-          <div className={`w-1/2 mx-auto text-center text-hero-bg px-6`}>
+      <div className=" bg-primary-bg">
+        <div className="flex justify-between items-center text-black py-10">
+          <div className={`w-1/2 mx-auto text-left text-hero-bg pl-32 `}>
             <div
-              className={`uppercase ${spaceGrotesk.className} text-6xl text-hero-bg px-6`}>
+              className={`uppercase ${spaceGrotesk.className} text-6xl text-hero-bg `}>
               In-depth Analysis that You Can Actually Trust
             </div>
-            <div className={`${spaceGrotesk.className} text-xl px-32 py-5`}>
+            <div className={`${spaceGrotesk.className} text-xl py-5`}>
               Instead of a million voices screaming, get one calm whisper
               guiding you to truth. Our models serve you facts, not conjecture.
             </div>
           </div>
-          <figure className="w-1/2 mx-auto text-center relative">
+          <figure className="w-1/2 mx-auto flex justify-center relative pr-12">
             <Image src={IndepthOne} alt="Hero Image" width={400} height={100} />
           </figure>
         </div>
       </div>
-      <div className="h-screen bg-primary-bg">
+      <div className="bg-primary-bg">
         <div className="flex justify-center items-center  h-screen text-black">
-          <figure className="mx-auto text-center relative">
+          <figure className="mx-auto text-center relative pl-20">
             <Image src={IndepthTwo} alt="Hero Image" width={400} height={100} />
           </figure>
-          <div className={`w-1/2 mx-auto text-center text-hero-bg px-6`}>
+          <div className={`w-1/2 mx-auto text-left text-hero-bg pr-20 pl-10`}>
             <div
-              className={`uppercase ${spaceGrotesk.className} text-6xl text-hero-bg px-6`}>
-              In-depth Analysis that You Can Actually Trust
+              className={`uppercase ${spaceGrotesk.className} text-6xl text-hero-bg`}>
+              Making News Crystal Clear
             </div>
-            <div className={`${spaceGrotesk.className} text-xl px-32 py-5`}>
-              Instead of a million voices screaming, get one calm whisper
-              guiding you to truth. Our models serve you facts, not conjecture.
+            <div className={`${spaceGrotesk.className} text-xl py-5`}>
+              We don&apos;t just strip out bias, we provide full clarity. Learn
+              the real story with us. Seeing through the fog has never been
+              easier.
             </div>
           </div>
         </div>
@@ -133,7 +137,7 @@ const HomeHero = () => {
       <div className="bg-primary-bg space-y-3 px-10 py-10">
         {data.map((item, index) => (
           <Link href={item.link} key={index}>
-            <div className="bg-secpmdary-bg mx-32 flex items-center rounded-md justify-between p-1 my-5">
+            <div className="bg-secpmdary-bg mx-32 flex items-center rounded-xl justify-between p-1 my-5">
               <div className="flex items-center space-x-1 text-white">
                 <Image
                   src={item.imgUrl}
@@ -161,9 +165,15 @@ const HomeHero = () => {
         <p className="text-hero-bg text-4xl">
           Ready to see the real news? Join us in this quest for truth.
         </p>
-        <div className="flex items-center my-5 space-x-5">
-          <Button text="Sign Up" />
-          <Button text="Learn More" className="bg-black" />
+        <div className="flex items-start my-5 space-x-5">
+          <Link href="/api/auth/login">
+            <button className="bg-hero-bg text-xl block w-fit text-white rounded-lg px-2 py-1 ">
+              Sign Up
+            </button>
+          </Link>
+          <button className="bg-black text-xl block w-fit text-white px-2 py-1 rounded-lg">
+            Learn More
+          </button>
         </div>
       </div>
     </div>
